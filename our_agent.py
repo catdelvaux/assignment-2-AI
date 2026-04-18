@@ -1,6 +1,6 @@
 from agent import Agent
 from oxono import Game
-import random
+import time
 
 class OurAgent(Agent):
     def __init__(self, player):
@@ -70,12 +70,34 @@ class OurAgent(Agent):
 
             return color_score + symbol_score
     
-    #algorithme vu en cours
     def AlphaBetaSearch(self, state, remaining_time):
-        v, action = self.max_value(state, float('-inf'), float('inf'), 3)
-        return action
+        # Iterative deepening: 
+        # Answer is refined progressively
+        # Ensure an answer within a time limit (real-time decision)
+        self.start_time = time.perf_counter()  
+        self.time_limit = remaining_time * 0.1
+        best = list(Game.actions(state))[0]
+        depth = 1
+
+        while True:
+            try:
+                v, action = self.max_value(state, float('-inf'), float('inf'), depth)
+                if action is not None:
+                    best = action
+                depth += 1
+                if depth > 4: 
+                    break
+            except TimeoutError:
+                break
+            
+        
+        return best
     
+    #algorithme vu en cours
     def max_value(self, state, alpha, beta, depth):
+        if time.perf_counter() - self.start_time >= self.time_limit:
+            raise TimeoutError()
+        
         if Game.is_terminal(state):
             return Game.utility(state, self.player), None
         if depth == 0:
@@ -96,6 +118,9 @@ class OurAgent(Agent):
         return v, action
     
     def min_value(self, state, alpha, beta, depth):
+        if time.perf_counter() - self.start_time >= self.time_limit:
+            raise TimeoutError()
+        
         if Game.is_terminal(state):
             return Game.utility(state, self.player), None
         if depth == 0:
